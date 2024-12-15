@@ -2,6 +2,6 @@
 chat-env
 api/.env
 api/testes/resultados/*
-!api/testes/resultados/testes_automatizados.json.zip
+#!api/testes/resultados/testes_automatizados.json.zip
 api/conteudo/bancos_vetores/*
-!api/conteudo/bancos_vetores/bancos_vetores.zip
+#!api/conteudo/bancos_vetores/bancos_vetores.zip
