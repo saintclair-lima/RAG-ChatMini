@@ -3,6 +3,9 @@ Este repositório é uma versão limpa do estado do repositório https://github.
 
 Para um histórico do processo, clone aquele repositório.
 
+## Setup
+Ao clonar este repositório, executar o aquivo `./setup.sh`
+
 ## Ollama: Instalação e Configuração
 ### Instalando o Ollama
 #### Linux
