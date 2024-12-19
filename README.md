@@ -1,5 +1,5 @@
-# RAG-ChatMini
-Este repositório é uma versão limpa do estado do repositório https://github.com/saintclair-lima/RAG-Chat.git.
+# Assistente de Busca
+Este repositório é a continuação do projeto RAG-Chat (https://github.com/saintclair-lima/RAG-Chat.git.) Foi reinicializado a partir de uma versão mais estável, após a realizaçaõ de testes.
 
 Para um histórico do processo, clone aquele repositório.
 
