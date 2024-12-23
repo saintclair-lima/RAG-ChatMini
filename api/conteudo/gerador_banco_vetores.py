@@ -118,8 +118,14 @@ class GeradorBancoVetores:
         return fragmentos
     
     def extrair_fragmento_pdf(self, rotulo, info, comprimento_max_fragmento):
-        pass
-    
+        fragmentos = []
+        arquivo = PdfReader(info['url'])
+        for idx in range(len(arquivo.pages)):
+            pagina = arquivo.pages[idx]
+            texto = pagina.extract_text()
+            fragmentos += processar_texto(texto, info, comprimento_max_fragmento, pagina=idx+1)
+        return fragmentos
+        
     def extrair_fragmento_html(self, rotulo, info, comprimento_max_fragmento):
         pass
     
