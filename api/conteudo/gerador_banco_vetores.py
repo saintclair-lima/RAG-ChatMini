@@ -56,7 +56,7 @@ class GeradorBancoVetores:
                 # AFAZER: considerar casos em que, mesmo após divisão das
                 # partes do artigo, haja alguma com mais palavras que o compr. máximo
                 for i in range(1, len(item)):
-                    if len(fragmento_artigo.split(' ')) + len(item[i]) <= comprimento_max_fragmento:
+                    if len(fragmento_artigo.split(' ')) + len(item[i].split(' ')) <= comprimento_max_fragmento:
                         fragmento_artigo = fragmento_artigo + ' ' + item[i]
                     else:
                         artigos.append(fragmento_artigo)
