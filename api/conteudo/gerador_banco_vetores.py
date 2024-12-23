@@ -213,24 +213,19 @@ class GeradorBancoVetores:
         
 if __name__ == "__main__":   
     gerador_banco_vetores = GeradorBancoVetores()
-    f = gerador_banco_vetores.extrair_fragmentos()
-    print(len(f))
-    
-    with open('saida.json', 'w', encoding='utf-8') as arq:
-        json.dump(f, arq, ensure_ascii=False, indent=2)
-    # nome_banco_vetores=os.path.join(URL_LOCAL,"bancos_vetores/" + sys.argv[1])
-    # nome_colecao=sys.argv[2]
-    # comprimento_max_fragmento = int(sys.argv[3])
-    # try:
-    #     instrucao = sys.argv[4]
-    #     gerador_banco_vetores.run(
-    #         nome_banco_vetores=nome_banco_vetores,
-    #         nome_colecao=nome_colecao,
-    #         comprimento_max_fragmento=comprimento_max_fragmento,
-    #         instrucao=instrucao)
-    # except:
-    #     gerador_banco_vetores.run(
-    #         nome_banco_vetores=nome_banco_vetores,
-    #         nome_colecao=nome_colecao,
-    #         comprimento_max_fragmento=comprimento_max_fragmento,
-    #         instrucao=None)
+    nome_banco_vetores=os.path.join(URL_LOCAL,"bancos_vetores/" + sys.argv[1])
+    nome_colecao=sys.argv[2]
+    comprimento_max_fragmento = int(sys.argv[3])
+    try:
+        instrucao = sys.argv[4]
+        gerador_banco_vetores.run(
+            nome_banco_vetores=nome_banco_vetores,
+            nome_colecao=nome_colecao,
+            comprimento_max_fragmento=comprimento_max_fragmento,
+            instrucao=instrucao)
+    except:
+        gerador_banco_vetores.run(
+            nome_banco_vetores=nome_banco_vetores,
+            nome_colecao=nome_colecao,
+            comprimento_max_fragmento=comprimento_max_fragmento,
+            instrucao=None)
