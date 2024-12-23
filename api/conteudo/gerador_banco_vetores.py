@@ -89,18 +89,31 @@ class GeradorBancoVetores:
         if info['texto_articulado']:
             return self.processar_texto_articulado(texto, info, comprimento_max_fragmento)
         
+        if len(texto.split(' ')) <= comprimento_max_fragmento:
+            return [{
+                    'page_content': texto,
+                    'metadata': {
+                        'titulo': f'{info["titulo"]}',
+                        'subtitulo':
+                            f'Página {pagina} - Fragmento 1' if pagina
+                            else f'Fragmento 1',
+                        'autor': f'{info["autor"]}',
+                        'fonte': f'{info["fonte"]}',
+                    },
+                }]
+            
         linhas = texto.replace('. ', '.\n')
         linhas = linhas.split('\n')
         while '' in linhas: linhas.remove('')
         
         fragmentos = []
-        fragmento = ''
+        texto_fragmento = ''
         for idx in range(len(linhas)):
-            if len(fragmento.split(' ')) + len(linhas[idx].split(' ')) < comprimento_max_fragmento:
-                fragmento += ' ' + linhas[idx]
+            if len(texto_fragmento.split(' ')) + len(linhas[idx].split(' ')) < comprimento_max_fragmento:
+                texto_fragmento += ' ' + linhas[idx]
             else:
-                fragmentos.append({
-                    'page_content': fragmento,
+                fragmento = {
+                    'page_content': texto_fragmento,
                     'metadata': {
                         'titulo': f'{info["titulo"]}',
                         'subtitulo':
@@ -109,9 +122,11 @@ class GeradorBancoVetores:
                         'autor': f'{info["autor"]}',
                         'fonte': f'{info["fonte"]}',
                     },
-                })
-                fragmento = ''
-        return fragmentos            
+                }
+                fragmentos.append(fragmento)
+                texto_fragmento = ''
+            
+        return fragmentos       
     
     def extrair_fragmento_txt(self, rotulo, info, comprimento_max_fragmento):
         with open(os.path.join(URL_LOCAL,info['url']), 'r') as arq:
@@ -129,7 +144,6 @@ class GeradorBancoVetores:
             pagina = arquivo.pages[idx]
             texto = pagina.extract_text()
             fragmentos += self.processar_texto(texto, info, comprimento_max_fragmento, pagina=idx+1)
-        
         for idx in range(len(fragmentos)): fragmentos[idx]['id'] = f'{rotulo}:{idx+1}'
         return fragmentos
         
