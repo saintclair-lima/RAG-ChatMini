@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from ..environment.environment import environment
@@ -6,6 +7,8 @@ from torch import cuda
 
 from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
+from pypdf import PdfReader
+from bs4 import BeautifulSoup
 
 URL_LOCAL = os.path.abspath(os.path.join(os.path.dirname(__file__), "./"))
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
@@ -19,10 +22,11 @@ COMPRIMENTO_MAX_FRAGMENTO = 300
 class GeradorBancoVetores:
     
     def processar_texto_articulado(self, texto, info, comprimento_max_fragmento):
+        '''Processa textos legais, divididos em artigos. Mantém o Caput dos artigos em cada um dos fragmentos.'''
         
         texto = texto.replace('\n', ' ')
         while '  ' in texto: texto = texto.replace('  ', ' ')
-        texto = texto.replace('Art. ', '\nArt. ')
+        texto = texto.replace(' Art. ', '\nArt. ')
         
         for num in range(1, 10):
                 texto = texto.replace(f'Art. {num}º', f'Art. {num}.')
@@ -38,15 +42,15 @@ class GeradorBancoVetores:
             qtd_palavras = len(item)
             if qtd_palavras > comprimento_max_fragmento:
                 item = (
-                    art.replace('. §', '.\n§')
-                    .replace('; §', ';\n§')
-                    .replace(': §', ':\n§')
-                    .replace(';', '\n')
-                    .replace(':', '\n')
-                    .replace('\n ', '\n')
-                    .replace(' \n', '\n')
-                    .split('\n')
-                )
+                        art.replace('. §', '.\n§')
+                        .replace('; §', ';\n§')
+                        .replace(': §', ':\n§')
+                        .replace(';', '\n')
+                        .replace(':', '\n')
+                        .replace('\n ', '\n')
+                        .replace(' \n', '\n')
+                        .split('\n')
+                    )
                 caput = item[0]
                 fragmento_artigo = '' + caput
                 # AFAZER: considerar casos em que, mesmo após divisão das
@@ -78,8 +82,8 @@ class GeradorBancoVetores:
             fragmentos.append(fragmento)
         return fragmentos
     
-    def processar_texto(self, texto, info, comprimento_max_fragmento):
-        texto = texto.replace('\n', ' ')
+    def processar_texto(self, texto, info, comprimento_max_fragmento, pagina=None):
+        texto = texto.replace('\n', ' ').replace('\t', ' ')
         while '  ' in texto: texto = texto.replace('  ', ' ')
         
         if info['texto_articulado']:
@@ -99,16 +103,17 @@ class GeradorBancoVetores:
                     'page_content': fragmento,
                     'metadata': {
                         'titulo': f'{info["titulo"]}',
-                        'subtitulo': f'Fragmento {len(fragmentos)+1}',
+                        'subtitulo':
+                            f'Página {pagina} - Fragmento {len(fragmentos)+1}' if pagina
+                            else f'Fragmento {len(fragmentos)+1}',
                         'autor': f'{info["autor"]}',
                         'fonte': f'{info["fonte"]}',
                     },
                 })
                 fragmento = ''
-        return fragmentos
-            
+        return fragmentos            
     
-    def extrair_fragmento_texto(self, rotulo, info, comprimento_max_fragmento):
+    def extrair_fragmento_txt(self, rotulo, info, comprimento_max_fragmento):
         with open(os.path.join(URL_LOCAL,info['url']), 'r') as arq:
             texto = arq.read()
         
@@ -119,23 +124,32 @@ class GeradorBancoVetores:
     
     def extrair_fragmento_pdf(self, rotulo, info, comprimento_max_fragmento):
         fragmentos = []
-        arquivo = PdfReader(info['url'])
+        arquivo = PdfReader(os.path.join(URL_LOCAL,info['url']))
         for idx in range(len(arquivo.pages)):
             pagina = arquivo.pages[idx]
             texto = pagina.extract_text()
-            fragmentos += processar_texto(texto, info, comprimento_max_fragmento, pagina=idx+1)
+            fragmentos += self.processar_texto(texto, info, comprimento_max_fragmento, pagina=idx+1)
+        
+        for idx in range(len(fragmentos)): fragmentos[idx]['id'] = f'{rotulo}:{idx+1}'
         return fragmentos
         
     def extrair_fragmento_html(self, rotulo, info, comprimento_max_fragmento):
-        pass
+        with open(os.path.join(URL_LOCAL,info['url']), 'r', encoding='utf-8') as arq:
+            conteudo_html = arq.read()
+            
+        pagina_html = BeautifulSoup(conteudo_html, 'html.parser')
+        tags = pagina_html.find_all()
+        texto = '\n'.join([tag.get_text() for tag in tags])
+        
+        fragmentos = self.processar_texto(texto, info, comprimento_max_fragmento)
+        for idx in range(len(fragmentos)): fragmentos[idx]['id'] = f'{rotulo}:{idx+1}'
+        return fragmentos
     
     extrair_fragmento_por_tipo = {
-        'txt': extrair_fragmento_texto,
-        'pdf': extrair_fragmento_texto,
-        'html': extrair_fragmento_texto,
-    }
-        
-    
+        'txt':  extrair_fragmento_txt,
+        'pdf':  extrair_fragmento_pdf,
+        'html': extrair_fragmento_html,
+    }    
     
     def extrair_fragmentos(self,
         indice_documentos=environment.DOCUMENTOS,
@@ -199,20 +213,24 @@ class GeradorBancoVetores:
         
 if __name__ == "__main__":   
     gerador_banco_vetores = GeradorBancoVetores()
+    f = gerador_banco_vetores.extrair_fragmentos()
+    print(len(f))
     
-    nome_banco_vetores=os.path.join(URL_LOCAL,"bancos_vetores/" + sys.argv[1])
-    nome_colecao=sys.argv[2]
-    comprimento_max_fragmento = int(sys.argv[3])
-    try:
-        instrucao = sys.argv[4]
-        gerador_banco_vetores.run(
-            nome_banco_vetores=nome_banco_vetores,
-            nome_colecao=nome_colecao,
-            comprimento_max_fragmento=comprimento_max_fragmento,
-            instrucao=instrucao)
-    except:
-        gerador_banco_vetores.run(
-            nome_banco_vetores=nome_banco_vetores,
-            nome_colecao=nome_colecao,
-            comprimento_max_fragmento=comprimento_max_fragmento,
-            instrucao=None)
+    with open('saida.json', 'w', encoding='utf-8') as arq:
+        json.dump(f, arq, ensure_ascii=False, indent=2)
+    # nome_banco_vetores=os.path.join(URL_LOCAL,"bancos_vetores/" + sys.argv[1])
+    # nome_colecao=sys.argv[2]
+    # comprimento_max_fragmento = int(sys.argv[3])
+    # try:
+    #     instrucao = sys.argv[4]
+    #     gerador_banco_vetores.run(
+    #         nome_banco_vetores=nome_banco_vetores,
+    #         nome_colecao=nome_colecao,
+    #         comprimento_max_fragmento=comprimento_max_fragmento,
+    #         instrucao=instrucao)
+    # except:
+    #     gerador_banco_vetores.run(
+    #         nome_banco_vetores=nome_banco_vetores,
+    #         nome_colecao=nome_colecao,
+    #         comprimento_max_fragmento=comprimento_max_fragmento,
+    #         instrucao=None)
