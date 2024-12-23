@@ -4,7 +4,7 @@ Este repositório é a continuação do projeto RAG-Chat (https://github.com/sai
 Para um histórico do processo, clone aquele repositório.
 
 ## Setup
-Ao clonar este repositório, executar o aquivo `./setup.sh`
+O aquivo `./setup.sh` permite a disponibilização de arquivos de teste, meramente para colocar o projeto para funcionar. O banco vetorial e sua coleção mencionados no .env.TEMPLATE se referem ao banco vetorial que é descompactado com a execução do arquivo.
 
 ## Ollama: Instalação e Configuração
 ### Instalando o Ollama
@@ -16,6 +16,15 @@ curl -fsSL https://ollama.com/install.sh | sh
 #### Windows
 * Acesse a página de download do Ollama no link https://ollama.com/download/windows e faça o download do instalador.
 * Execute o instalador e siga as instruções em tela
+
+### Inicializando o Ollama como API
+Para inicializar o Ollama, basta executar
+```
+ollama serve
+```
+Caso `OLLAMA_DEBUG` esteja configurado como `true` (ver abaixo) é feito um log com as configurações de inicialização do Ollama.
+
+É necessário que o Ollama esteja executando para realizar a adição de modelos.
 
 ### Adicionando os modelos ao Ollama
 No projeto, utilizamos como modelo principal o `Llama3.2`, mas outros modelos são disponíveis para download (como o `phi3.5`, por exemplo).
@@ -70,13 +79,6 @@ set OLLAMA_MAX_LOADED_MODELS=5
 set OLLAMA_MAX_QUEUE=512
 set OLLAMA_DEBUG='true'
 ```
-
-### Inicializando o Ollama como API
-Basta executar
-```
-ollama serve
-```
-Caso `OLLAMA_DEBUG` esteja configurado como `true` é feito um log com as configurações de inicialização do Ollama.
 
 ## Python: Instalação e Configuração
 ### Instalando Python
