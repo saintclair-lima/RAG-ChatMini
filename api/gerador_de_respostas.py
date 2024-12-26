@@ -127,6 +127,16 @@ class GeradorDeRespostas:
     async def consultar(self, dados_chat: DadosChat, fazer_log:bool=True):
         contexto = dados_chat.contexto
         pergunta = dados_chat.pergunta
+        
+        if len(pergunta.split(' ')) > 300:
+            #AFAZER: decidir se mantém essa limitação. Colocada a princípio para evitar
+            #        problema de truncation com o Bert. Ajuda com Prompt Injection?
+            yield json.dumps({
+                    "erro": "Pergunta com mais de 300 palavras",
+                    "mensagem": "Por motivos de segurança, a pergunta deve ter no máximo 300 palavras. Por favor, reformule o que você deseja perguntar, para ficar dentro desse limite.",
+                    "severidade": "leve"
+                    })
+            return
 
         if fazer_log: print(f'Gerador de respostas: realizando consulta para "{pergunta}"...')
 
@@ -138,37 +148,36 @@ class GeradorDeRespostas:
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
 
-        # Atribuindo scores usando Bert
-        if fazer_log: print(f'--- aplicando scores do Bert aos documentos recuperados...')
-        marcador_tempo_inicio = time()
-        for documento in lista_documentos:
-            resposta_estimada = await self.estimar_resposta(pergunta, documento['conteudo'])
-            documento['score_bert'] = resposta_estimada['score']
-            documento['score_ponderado'] = resposta_estimada['score_ponderado']
-            documento['resposta_bert'] = resposta_estimada['resposta']
-        marcador_tempo_fim = time()
-        tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
-        if fazer_log: print(f'--- scores atribuídos ({tempo_bert} segundos)')
+        # # Atribuindo scores usando Bert
+        # if fazer_log: print(f'--- aplicando scores do Bert aos documentos recuperados...')
+        # marcador_tempo_inicio = time()
+        # for documento in lista_documentos:
+        #     try:
+        #         resposta_estimada = await self.estimar_resposta(pergunta, documento['conteudo'])
+        #         documento['score_bert'] = resposta_estimada['score']
+        #         documento['score_ponderado'] = resposta_estimada['score_ponderado']
+        #         documento['resposta_bert'] = resposta_estimada['resposta']
+        #     except Exception as excecao:
+        #         print ('Vixe, deu erro. Tentando continuar...')
+        #         documento['score_bert'] = None
+        #         documento['score_ponderado'] = None
+        #         documento['resposta_bert'] = None
+        #         yield json.dumps({
+        #             "info": str(excecao),
+        #             "mensagem": "Houve um erro ao avaliar os documentos encontrados. Documentos retornados sem valor de avaliação",
+        #             "severidade": "leve"
+        #             })
+        # marcador_tempo_fim = time()
+        # tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
+        # if fazer_log: print(f'--- scores atribuídos ({tempo_bert} segundos)')
         
-        # Gerando resposta utilizando o Llama
-        if fazer_log: print(f'--- gerando resposta com o Llama')
-        marcador_tempo_inicio = time()
-        texto_resposta_llama = ''
-        flag_tempo_resposta = False
-        async for item in self.interface_ollama.gerar_resposta_llama(
-                    pergunta=pergunta,
-                    # Inclui o título dos documentos no prompt do Llama
-                    documentos=[f"{doc[0]['titulo']} - {doc[1]}" for doc in zip(documentos['metadatas'][0], documentos['documents'][0])],
-                    contexto=contexto):
-            
-            texto_resposta_llama += item['response']
-            yield item['response']
-            if not flag_tempo_resposta:
-                flag_tempo_resposta = True
-                tempo_inicio_resposta = time() - marcador_tempo_inicio
-                if fazer_log: print(f'----- iniciou retorno da resposta ({tempo_inicio_resposta} segundos)')
-
-        item['response'] = texto_resposta_llama
+        docs = [doc['conteudo'].split(' ') for doc in lista_documentos]
+        ctxt = list(contexto)
+        for doc in docs: ctxt += doc
+        mock_llama_data = {
+            'context': ctxt * 3,
+            'response': 'Esta é uam resposta padrão pra ser usada somente em teztes'
+        }
         marcador_tempo_fim = time()
         tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
@@ -180,11 +189,11 @@ class GeradorDeRespostas:
             {
                 "pergunta": pergunta,
                 "documentos": lista_documentos,
-                "resposta_llama": item,
-                "resposta": texto_resposta_llama.replace('\n\n', '\n'),
+                "resposta_llama": mock_llama_data,
+                "resposta": mock_llama_data['response'].replace('\n\n', '\n'),
                 "tempo_consulta": tempo_consulta,
-                "tempo_bert": tempo_bert,
-                "tempo_inicio_resposta": tempo_inicio_resposta,
+                #"tempo_bert": tempo_bert,
+                "tempo_inicio_resposta": 0.0,
                 "tempo_llama_total": tempo_llama
             },
             ensure_ascii=False
