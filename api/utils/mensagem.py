@@ -1,13 +1,15 @@
-from typing import Any
+from typing import Any, TypedDict
 import json
+
+class DadosMensagem(TypedDict):
+    tag: str
+    conteudo: Any = None
 
 class Mensagem:
     def __init__(
         self,
         tipo: str,
-        descricao: str = None,
-        mensagem: str = None,
-        dados: Any = None):
+        descricao: str = None):
             self.tipo=tipo
             self.descricao=descricao
             
@@ -16,7 +18,7 @@ class Mensagem:
             {
                 'tipo': self.tipo,
                 'descricao': self.descricao
-            }
+            }, ensure_ascii=False
         )
 
 class MensagemInfo(Mensagem):
@@ -32,7 +34,7 @@ class MensagemInfo(Mensagem):
                 'tipo': self.tipo,
                 'descricao': self.descricao,
                 'mensagem': self.mensagem
-            }
+            }, ensure_ascii=False
         )
 
 class MensagemErro(Mensagem):
@@ -48,13 +50,13 @@ class MensagemErro(Mensagem):
                 'tipo': self.tipo,
                 'descricao': self.descricao,
                 'mensagem': self.mensagem
-            }
+            }, ensure_ascii=False
         )
 
 class MensagemControle(Mensagem):
     def __init__(self,
         descricao: str,
-        dados: Any = None,
+        dados: DadosMensagem = None,
         mensagem: str = None):
             Mensagem.__init__(self, 'controle', descricao)
             self.mensagem=mensagem
@@ -66,14 +68,17 @@ class MensagemControle(Mensagem):
                 'tipo': self.tipo,
                 'descricao': self.descricao,
                 'mensagem': self.mensagem,
-                'dados': self.dados
-            }
+                'dados': {
+                    'tag': self.dados['tag'],
+                    'conteudo': self.dados['conteudo']
+                    }
+            }, ensure_ascii=False
         )
 
 class MensagemDados(Mensagem):
     def __init__(self,
         descricao: str,
-        dados: Any,
+        dados: DadosMensagem,
         mensagem: str = None):
             Mensagem.__init__(self, 'dados', descricao)
             self.mensagem=mensagem
@@ -85,6 +90,9 @@ class MensagemDados(Mensagem):
                 'tipo': self.tipo,
                 'descricao': self.descricao,
                 'mensagem': self.mensagem,
-                'dados': self.dados
-            }
+                'dados': {
+                    'tag': self.dados['tag'],
+                    'conteudo': self.dados['conteudo']
+                    }
+            }, ensure_ascii=False
         )
