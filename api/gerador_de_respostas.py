@@ -120,7 +120,7 @@ class GeradorDeRespostas:
         contexto = dados_chat.contexto
         pergunta = dados_chat.pergunta
         
-        if len(pergunta.split(' ')) > 300000:
+        if len(pergunta.split(' ')) > 300:
             #AFAZER: decidir se mantém essa limitação. Colocada a princípio para evitar
             #        problema de truncation com o Bert. Ajuda com Prompt Injection?
             yield MensagemErro(
