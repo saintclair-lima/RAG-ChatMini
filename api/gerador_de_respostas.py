@@ -142,6 +142,7 @@ class GeradorDeRespostas:
             documentos = await self.consultar_documentos_banco_vetores(pergunta)
             lista_documentos = self.formatar_lista_documentos(documentos)
         except Exception as excecao:
+            print(excecao.__traceback__)
             yield MensagemErro(
                 descricao='Falha na Consulta ao Banco Vetorial',
                 mensagem=f'Houve um problema na consulta de documentos. Tente mais tarde. (Tipo do erro: {excecao.__class__.__name__})'
@@ -162,6 +163,7 @@ class GeradorDeRespostas:
                 documento['score_ponderado'] = resposta_estimada['score_ponderado']
                 documento['resposta_bert'] = resposta_estimada['resposta']
             except Exception as excecao:
+                print(excecao.__traceback__)
                 documento['score_bert'] = None
                 documento['score_ponderado'] = None
                 documento['resposta_bert'] = None
