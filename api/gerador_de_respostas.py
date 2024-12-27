@@ -168,8 +168,8 @@ class GeradorDeRespostas:
         # tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
         # if fazer_log: print(f'--- scores atribuídos ({tempo_bert} segundos)')
         
-        # # Gerando resposta utilizando o Llama
-        # if fazer_log: print(f'--- gerando resposta com o Llama')
+        # Gerando resposta utilizando o Llama
+        if fazer_log: print(f'--- gerando resposta com o Llama')
         yield MensagemControle(
             descricao='Informação de Status',
             dados={'tag':'status', 'conteudo':'Gerando resposta'}
