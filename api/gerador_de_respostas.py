@@ -252,21 +252,22 @@ Referência para Mocking do Llama
         tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
 
-        yield "CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA"
-
         # Retornando dados compilados
-        yield json.dumps(
-            {
-                "pergunta": pergunta,
-                "documentos": lista_documentos,
-                "resposta_llama": mock_llama_data,
-                "resposta": mock_llama_data['response'].replace('\n\n', '\n'),
-                "tempo_consulta": tempo_consulta,
-                #"tempo_bert": tempo_bert,
-                "tempo_inicio_resposta": 0.0,
-                "tempo_llama_total": tempo_llama
-            },
-            ensure_ascii=False
-        )
+        yield MensagemDados(
+                descricao='Resposta completa',
+                dados={
+                    'tag': 'resposta-completa-llm',
+                    'conteudo': {
+                        "pergunta": pergunta,
+                        "documentos": lista_documentos,
+                        "resposta_llama": mock_llama_data,
+                        "resposta": mock_llama_data['response'].replace('\n\n', '\n'),
+                        "tempo_consulta": tempo_consulta,
+                        "tempo_bert": tempo_bert,
+                        "tempo_inicio_resposta": 0.0,
+                        "tempo_llama_total": tempo_llama
+                    }
+                }
+            ).json()
         print('Concluído')
 '''
